@@ -132,7 +132,7 @@ public class RespawnUI : MonoBehaviour
 
         // Move player + restore HP
         if (SpawnManager.Instance != null)
-            SpawnManager.Instance.Respawn(playerRoot); // make sure this is the player object
+            SpawnManager.Instance.RespawnNow(playerRoot); // make sure this is the player object
 
         targetHealth.RespawnFull();
     }
