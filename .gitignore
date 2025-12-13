@@ -1,0 +1,52 @@
+# ===============================
+# Unity generated folders
+# ===============================
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# ===============================
+# IDE / Editor files
+# ===============================
+.vscode/
+.vs/
+.idea/
+*.csproj
+*.sln
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+# ===============================
+# OS junk
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===============================
+# Unity crash reports
+# ===============================
+sysinfo.txt
+
+# ===============================
+# Addressables / Streaming cache
+# ===============================
+Assets/AddressableAssetsData/*/*.bin*
+Assets/AddressableAssetsData/*/*.hash*
+
+# ===============================
+# Build artifacts
+# ===============================
+*.apk
+*.aab
+*.exe
+*.app
+*.unitypackage
