@@ -13,11 +13,8 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] private float respawnDelaySeconds = 2f;
 
     [Header("Camera")]
-    [SerializeField] private CinemachineVirtualCamera vcam;   // drag PlayerFollowCamera here
-    [SerializeField] private CinemachineBrain brain;          // drag MainCamera's CinemachineBrain here (if present)
-    [SerializeField] private CameraRespawnSnap cameraSnapper;
-
-
+    [SerializeField] private CinemachineVirtualCamera vcam;
+    [SerializeField] private CinemachineBrain brain;
 
     private SpawnPoint[] _spawnPoints;
 
@@ -30,27 +27,31 @@ public class SpawnManager : MonoBehaviour
         }
         Instance = this;
 
-        // Find spawn points in the scene
         _spawnPoints = FindObjectsOfType<SpawnPoint>();
-
-        if (_spawnPoints == null || _spawnPoints.Length == 0)
-        {
-            Debug.LogError("SpawnManager: No SpawnPoint objects found in the scene.");
-        }
+        if (_spawnPoints.Length == 0)
+            Debug.LogError("SpawnManager: No SpawnPoints found.");
     }
 
-    public Transform GetRandomSpawn()
+    private Transform GetRandomSpawn()
     {
-        if (_spawnPoints == null || _spawnPoints.Length == 0) return null;
-        int idx = Random.Range(0, _spawnPoints.Length);
-        return _spawnPoints[idx].transform;
+        return _spawnPoints[Random.Range(0, _spawnPoints.Length)].transform;
     }
+
+    // === PUBLIC API ===
 
     public void Respawn(GameObject playerRoot)
     {
         StopAllCoroutines();
         StartCoroutine(RespawnRoutine(playerRoot, respawnDelaySeconds));
     }
+
+    public void RespawnNow(GameObject playerRoot)
+    {
+        StopAllCoroutines();
+        StartCoroutine(RespawnRoutine(playerRoot, 0f));
+    }
+
+    // === CORE LOGIC ===
 
     private IEnumerator RespawnRoutine(GameObject playerRoot, float delay)
     {
@@ -60,50 +61,35 @@ public class SpawnManager : MonoBehaviour
         Transform sp = GetRandomSpawn();
         if (sp == null) yield break;
 
-        var cc = playerRoot.GetComponent<CharacterController>();
+        var rag = playerRoot.GetComponent<RagdollController>();
+        var cc  = playerRoot.GetComponent<CharacterController>();
+
+        // Disable controller before teleport
         if (cc != null) cc.enabled = false;
 
-        playerRoot.transform.SetPositionAndRotation(sp.position, sp.rotation);
+        // Handle ragdoll reset OR normal teleport
+        if (rag != null)
+            rag.ResetFromRagdoll(sp.position, sp.rotation);
+        else
+            playerRoot.transform.SetPositionAndRotation(sp.position, sp.rotation);
 
-        // after teleport
-        if (vcam != null)
-        {
-            vcam.PreviousStateIsValid = false;
-        }
-
-        var brain = Camera.main != null ? Camera.main.GetComponent<Cinemachine.CinemachineBrain>() : null;
-        if (brain != null)
-        {
-            // Force a cut this frame so it doesn't blend from old position
-            var oldBlend = brain.m_DefaultBlend;
-            brain.m_DefaultBlend = new Cinemachine.CinemachineBlendDefinition(Cinemachine.CinemachineBlendDefinition.Style.Cut, 0f);
-
-            // restore next frame
-            StartCoroutine(RestoreBlendNextFrame(brain, oldBlend));
-        }
-
-
+        // Re-enable controller
         if (cc != null) cc.enabled = true;
 
-        // // IMPORTANT: do your camera snap/reset HERE (right after teleport)
-        // cameraSnapper?.Snap(); // if you added the CameraRespawnSnap script
+        // === CINEMACHINE HARD RESET ===
+        if (vcam != null)
+            vcam.PreviousStateIsValid = false;
+
+        if (brain != null)
+        {
+            var oldBlend = brain.m_DefaultBlend;
+            brain.m_DefaultBlend =
+                new CinemachineBlendDefinition(
+                    CinemachineBlendDefinition.Style.Cut, 0f);
+
+            yield return null; // one frame
+
+            brain.m_DefaultBlend = oldBlend;
+        }
     }
-
-    public void RespawnNow(GameObject playerRoot)
-    {
-        StopAllCoroutines();
-        StartCoroutine(RespawnRoutine(playerRoot, 0f));
-    }
-
-    private IEnumerator RestoreBlendNextFrame(Cinemachine.CinemachineBrain brain, Cinemachine.CinemachineBlendDefinition oldBlend)
-    {
-        yield return null;
-        if (brain != null) brain.m_DefaultBlend = oldBlend;
-    }
-
-
-
-
-    
 }
-

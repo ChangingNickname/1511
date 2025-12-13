@@ -47,6 +47,8 @@ public class Health : MonoBehaviour
         IsDead = true;
         Debug.Log($"{name} died.");
         OnDied?.Invoke();
+        var rag = GetComponent<RagdollController>();
+        if (rag != null) rag.DieRagdoll();
     }
 
     public void RespawnFull()
